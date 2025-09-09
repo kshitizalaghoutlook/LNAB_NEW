@@ -2063,10 +2063,42 @@ namespace LNAB
             Log("Exiting program");
             // new Program().myServiceHost.Close();
             // This is where you can clean up resources or log information before the application closes
-            browser.CloseAsync();
+            ShutdownBrowser();
             this.InActivate();
             this.myServiceHost.Close();
-            Environment.Exit(0);
+        }
+
+        public static void ShutdownBrowser()
+        {
+            try
+            {
+                if (page != null && !page.IsClosed)
+                {
+                    page.CloseAsync().GetAwaiter().GetResult();
+                }
+            }
+            catch { }
+            finally
+            {
+                page = null;
+            }
+
+            try
+            {
+                if (browser != null)
+                {
+                    if (browser.IsConnected)
+                    {
+                        browser.CloseAsync().GetAwaiter().GetResult();
+                    }
+                    browser.Process?.Kill();
+                }
+            }
+            catch { }
+            finally
+            {
+                browser = null;
+            }
         }
 
         public static void CloseServiceHost()
@@ -2109,7 +2141,7 @@ namespace LNAB
 
         }
 
-        public async void Form1_Closing(object sender, CancelEventArgs e)
+        public void Form1_Closing(object sender, CancelEventArgs e)
         {
             //listener.Stop();
             //listener.Close();
@@ -2117,19 +2149,12 @@ namespace LNAB
             {
                 this.InActivate();
                 this.myServiceHost.Close();
-                if (browser != null)
-                {
-                    await browser.CloseAsync();
-                }
+                ShutdownBrowser();
                 base.Closing -= new CancelEventHandler(this.Form1_Closing);
-                if (page != null) await page.CloseAsync();
-                if (browser != null) await browser.CloseAsync();
             }
             catch { }
             finally
             {
-                page = null;
-                browser = null;
                 Application.Exit();
             }
 
