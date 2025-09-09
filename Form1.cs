@@ -48,6 +48,8 @@ namespace LNAB
         // schedule + one precise boundary timer (no OnTimerEvent)
         private SupplierSchedule _sched;
         private readonly System.Windows.Forms.Timer _boundaryTimer = new System.Windows.Forms.Timer();
+        private readonly System.Windows.Forms.Timer _idleTimer = new System.Windows.Forms.Timer();
+        private DateTime _lastActivity;
 
 
         string[] errorTerms = { "TIMEOUT", "due to planned maintenance", "the appres system is temporarily unavailable", "asas id enrollment not found" };
@@ -216,6 +218,7 @@ namespace LNAB
                     ProcessQueue();
                 }
             }
+            ResetIdleTimer();
         }
 
         private async void ProcessQueue()
@@ -231,6 +234,7 @@ namespace LNAB
                 try
                 {
                     await request();
+                    ResetIdleTimer();
                 }
                 catch (Exception exception1)
                 {
@@ -245,6 +249,22 @@ namespace LNAB
                 isProcessing = false;
             }
         }
+
+        private void IdleTimer_Tick(object sender, EventArgs e)
+        {
+            if (!isProcessing && DateTime.Now - _lastActivity >= TimeSpan.FromMinutes(30))
+            {
+                Application.Restart();
+            }
+        }
+
+        private void ResetIdleTimer()
+        {
+            _lastActivity = DateTime.Now;
+            _idleTimer.Stop();
+            _idleTimer.Start();
+        }
+
         public Form1()
         {
             //this.t = new System.Windows.Forms.Timer();
@@ -266,6 +286,11 @@ namespace LNAB
 
             //this.webBrowser1.ObjectForScripting = this;
             base.Closing += new CancelEventHandler(this.Form1_Closing);
+
+            _idleTimer.Interval = (int)TimeSpan.FromMinutes(30).TotalMilliseconds;
+            _idleTimer.Tick += IdleTimer_Tick;
+            _lastActivity = DateTime.Now;
+            _idleTimer.Start();
 
         }
 
@@ -1584,6 +1609,7 @@ namespace LNAB
 
         protected async void start()
         {
+            ResetIdleTimer();
 
             //if (this.myServiceHost.State == CommunicationState.Opened)
             //{
@@ -1614,6 +1640,7 @@ namespace LNAB
                 // Main(new string[] { }).GetAwaiter().GetResult();
                 //sendEmail("Listened to a request");
                 await ProcessRequest(str, false);
+                ResetIdleTimer();
             }
 
             else if (strPrev != "" && !strPrev.Equals(vin))
@@ -1626,6 +1653,7 @@ namespace LNAB
                 //sendEmail("Listened to a request");
 
                 await ProcessRequest(strPrev, true);
+                ResetIdleTimer();
             }
 
             else
@@ -1639,6 +1667,7 @@ namespace LNAB
                     // Main(new string[] { }).GetAwaiter().GetResult();
                     //sendEmail("Listened to a request");
                     await ProcessRequest(str, false);
+                    ResetIdleTimer();
                 }
                 catch (System.Exception exception1)
                 {
