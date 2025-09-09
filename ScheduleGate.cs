@@ -12,7 +12,7 @@ namespace LNAB
     {
         public bool Accepting { get; private set; }
         readonly SupplierSchedule s;
-        readonly TimeSpan prestart = TimeSpan.FromMinutes(5);
+        readonly TimeSpan postStart = TimeSpan.FromMinutes(1);
         System.Threading.Timer t; DateTime lastRestartFor = DateTime.MinValue;
 
         public ScheduleGate(SupplierSchedule schedule) { s = schedule; }
@@ -48,17 +48,17 @@ namespace LNAB
             var on = InWin(w, now.TimeOfDay);
             if (on != Accepting) Accepting = on;
 
-            // pre-start restart once per window
+            // post-start restart once per window
             var nextStart = NextStart(s, now);
-            var restartAt = nextStart - prestart;
-            if (now >= restartAt && now < nextStart && lastRestartFor.Date != nextStart.Date)
+            var restartAt = nextStart + postStart;
+            if (now >= restartAt && lastRestartFor.Date != nextStart.Date)
             {
-                lastRestartFor = nextStart.Date;
+                lastRestartFor = nextStart;
                 TryRestart();
                 return;
             }
 
-            // next wake: end of current window, next start, or prestart time
+            // next wake: end of current window, next start, or post-start time
             DateTime? end = (w.a == TimeSpan.Zero && w.b == TimeSpan.Zero) ? (DateTime?)null
                            : (w.a <= w.b ? now.Date + w.b : now.Date.AddDays(1) + w.b);
 
