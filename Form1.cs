@@ -487,6 +487,9 @@ namespace LNAB
                 }
             }
 
+            // Test schedule: force a 4:50 PM start with a 4:55 PM stop
+            _sched = new SupplierSchedule(new[] { $"{(int)DateTime.Now.DayOfWeek};4:50 PM;4:55 PM" });
+
             if (_sched == null)
             {
                 // No schedule -> treat as closed and retry soon
