@@ -50,6 +50,7 @@ namespace LNAB
         private readonly System.Windows.Forms.Timer _boundaryTimer = new System.Windows.Forms.Timer();
         private readonly System.Windows.Forms.Timer _idleTimer = new System.Windows.Forms.Timer();
         private DateTime _lastActivity;
+        private ScheduleGate _restartGate;
 
 
         string[] errorTerms = { "TIMEOUT", "due to planned maintenance", "the appres system is temporarily unavailable", "asas id enrollment not found" };
@@ -497,6 +498,10 @@ namespace LNAB
                 _boundaryTimer.Start();
                 return;
             }
+
+            _restartGate?.Dispose();
+            _restartGate = new ScheduleGate(_sched);
+            _restartGate.Start();
 
             // === Decide current state ===
             var now = DateTime.Now;
