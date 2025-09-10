@@ -522,7 +522,10 @@ namespace LNAB
             this.host = strArrays1[0];
             port = Convert.ToInt16(strArrays1[1]);
             this.app = strArrays[3];
-            this.Activate();
+            if (inside)
+            {
+                this.Activate();
+            }
             Uri uri = new Uri(this.appName);
 
             // Service Host Started
@@ -2257,6 +2260,7 @@ namespace LNAB
             if (inside)
             {
                 // just entered active window
+                this.Activate();
                 if (this.searchOpen()) start();
             }
             else
